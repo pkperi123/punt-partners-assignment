@@ -99,28 +99,47 @@ const getAudioBuffer = async (response) => {
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+
+
+const getAnswer = async (api_key, question) => {
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: question }],
+        max_tokens: 150,
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${api_key}`,
+        },
+      }
+    );
+    console.log("Response:", response.data.choices[0].message.content.trim());
+  }catch(error) {
+    console.error(
+      "Error:",
+      error.response ? error.response.data : error.message
+    );
+  }
+};
+
+
 app.post("/transcribe-audio", upload.single("audio"), async (req, res) => {
   try {
     const {openapi_key} = req.query
     console.log(openapi_key, "in server")
-    const openai = new OPENAI({apiKey :openapi_key});
     const text = await transcribeFile(req.file.buffer);
     console.log(text);
-    const response = await openai.chat.completions.create({
-        model:"gpt-3.5-turbo",
-        messages:[
-            {"role": "user", "content": text}
-        ],
-        max_tokens: 100
-    });
-    console.log(response);
-    let ans = text;
-    if(response.status == 401){
-        ans = "wrong api key";
-    }else {
-        ans = response.data.choices[0].message.content;
+    let ans = await getAnswer(openapi_key, text);
+    if (!ans) {
+      ans = "Invalid API key";
     }
-    console.log(ans);
+    const audioData = await getAudio(ans);
+
     const audiofile = await getAudio(ans);
     res.json({ result: ans , audio: audiofile.toString("base64"),
     });
