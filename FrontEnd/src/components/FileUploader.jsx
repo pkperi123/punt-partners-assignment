@@ -16,7 +16,7 @@ function MyDropzone() {
     const params = new URLSearchParams();
     params.append('openapi_key', openapikey)
     axios
-      .post("http://localhost:3000/transcribe-audio", formData, {
+      .post("https://punt-partners-assignment-backend.vercel.app/transcribe-audio", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
